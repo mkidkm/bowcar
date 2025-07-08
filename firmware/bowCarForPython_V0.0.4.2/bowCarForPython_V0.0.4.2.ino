@@ -16,7 +16,8 @@ void loop() {
     String command = Serial.readStringUntil('\n');
     command.trim();
     
-    // '1'이라는 문자를 받으면 LED를 켭니다.
+    // 첫글자가 l 인 경우 light를 제어  
+    // 두번째 글자가 a인 경우 전부 제어
     if (command[0] == 'l'){
       if(command[1] == 'a'){
         if(command[2] == 'n'){
