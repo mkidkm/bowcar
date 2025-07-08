@@ -3,10 +3,14 @@ import serial.tools.list_ports
 import time
 import os
 import subprocess
+import tempfile
+import shutil
+import importlib.resources
+from pathlib import Path
 
 folder_name = "arduino_bowcar"
 file_name = "arduino_bowcar.ino"
-firmware_version = "0.4.2"
+firmware_version = "0.0.4.2"
 
 # 아두이노 보드의 핀 번호 기본 설정
 # Default pin numbers for Arduino board
@@ -82,6 +86,7 @@ class BowCar:
     def __init__(self):
         # BowCar 객체가 생성될 때 시리얼 연결만 시도하도록 단순화
         self.port = self._find_arduino_port()
+        self.upload_firmware()  # 펌웨어 업로드 시도
         self.connection = None
         if self.port:
             try:
@@ -158,37 +163,47 @@ class BowCar:
         print(f'Logged code to {file_name} 파일에 코드를 기록했습니다')
     
     def upload_firmware(self):
-        """Upload the firmware to the board using arduino-cli."""
+        """펌웨어를 올바른 구조의 임시 폴더에 복사한 뒤 업로드합니다."""
         
-        # The path to the sketch FOLDER, not the file
-        sketch_path = f'firmware/bowCarForPython_V{firmware_version}'
+        # 실제 .ino 파일의 이름 (확장자 제외)
+        sketch_name = f"bowCarForPython_V{firmware_version}"
+        ino_filename = f"{sketch_name}.ino"
 
-        # The command should be 'compile --upload'
-        command: list[str] = [
-            'arduino-cli', 'compile', '--upload', 
-            '--port', str(self.port),
-            '--fqbn', 'arduino:avr:uno',
-            sketch_path  # Provide the folder path
-        ]
-        
-        print("업로드 명령어:", ' '.join(command))
-        print("코드 업로드 중... Uploading code...")
-        
         try:
-            result = subprocess.run(
-                command,
-                check=True,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-            )
-            print("코드 업로드 성공! Code upload successful!")
-            print(result.stdout.decode('utf-8'))
+            # 1. 패키지 내의 .ino 파일을 가리키는 객체 가져오기
+            traversable_path = importlib.resources.files("bowcar.firmware").joinpath(sketch_name, ino_filename)
+
+            with importlib.resources.as_file(traversable_path) as concrete_path:
+                # 2. 임시 디렉토리 생성
+                with tempfile.TemporaryDirectory() as temp_dir:
+                    # 3. .ino 파일과 이름이 같은 하위 폴더 생성
+                    sketch_subdir = Path(temp_dir) / sketch_name
+                    sketch_subdir.mkdir()
+                    
+                    # 4. .ino 파일을 이름이 같은 하위 폴더 안으로 복사
+                    shutil.copy(concrete_path, sketch_subdir)
+                    
+                    # 5. arduino-cli에 '하위 폴더'의 경로를 전달
+                    command = [
+                        'arduino-cli', 'compile', '--upload', 
+                        '--port', str(self.port),
+                        '--fqbn', 'arduino:avr:uno',
+                        str(sketch_subdir) # 최종 스케치 폴더 경로
+                    ]
+
+                    print("업로드 명령어 실행:", ' '.join(command))
+                    
+                    # ... (subprocess.run 호출 부분은 동일) ...
+                    result = subprocess.run(command, check=True, capture_output=True, text=True, encoding='utf-8')
+                    print("코드 업로드 성공!")
+                    print(result.stdout)
+
+        except (ModuleNotFoundError, FileNotFoundError):
+            print("오류: 패키지 또는 펌웨어 파일을 찾을 수 없습니다.")
         except subprocess.CalledProcessError as e:
-            # Provide more useful error info
-            print(f"업로드 실패: {e}")
-            print(f"에러 내용:\n{e.stderr.decode('utf-8')}")
-        except FileNotFoundError:
-            print("오류: 'arduino-cli'를 찾을 수 없습니다. PATH를 확인하세요.")
+            print(f"업로드 실패: {e}\n{e.stderr}")
+        except Exception as e:
+            print(f"알 수 없는 오류가 발생했습니다: {e}")
 
     def _find_arduino_port(self):
         ports = serial.tools.list_ports.comports()
