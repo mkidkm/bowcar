@@ -1,1 +1,1 @@
-__version__ = "0.0.1"  # Version of the bowcar package
+__version__ = "0.0.4.2"  # Version of the bowcar package

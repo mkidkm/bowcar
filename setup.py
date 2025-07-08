@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setuptools.setup(
     name="bowcar", ## 소문자 영단어
-    version="0.0.1", ##
+    version="0.0.4.2", ##
     author="ITPLE", ## ex) Sunkyeong Lee
     author_email="itple@itpleinfo.com", ##
     description="A package for controlling a bowcar // 바우카를 사용하기 위한 모듈", ##
@@ -19,4 +19,8 @@ setuptools.setup(
         "Operating System :: OS Independent",
     ],
     python_requires='>=3.6',
+    install_requires=[
+        "pyserial>=3.0",  # Serial communication library
+    ],
+    py_modules=["bowcar"],  # Specify the main module
 )
