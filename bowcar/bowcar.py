@@ -19,35 +19,35 @@ arduino_pins = '''
 // 바우카를 위한 아두이노 핀 번호
 
 // LED control pins
-const int RED_LED_PIN =10
-const int BLUE_LED_PIN =11
+const int RED_LED_PIN =10;
+const int BLUE_LED_PIN =11;
 
 // Ultrasonic sensor pins
-const int TRIG_PIN =12
-const int ECHO_PIN =13
+const int TRIG_PIN =12;
+const int ECHO_PIN =13;
 
 // IR sensor pins
-const int IRL_PIN =A6
-const int IRR_PIN =A7
+const int IRL_PIN =A6;
+const int IRR_PIN =A7;
 
 // Sound sensor pin
-const int SOUND_SENSOR_PIN =A3
+const int SOUND_SENSOR_PIN =A3;
 
 // Buzzer pin
-const int BUZZER_PIN =3 
+const int BUZZER_PIN =3;
 
 // Motor control pins
-const int LM_DIR_PIN =2
-const int LM_PWM_PIN =5
+const int LM_DIR_PIN =2;
+const int LM_PWM_PIN =5;
 
-const int RM_DIR_PIN =4
-const int RM_PWM_PIN =6
+const int RM_DIR_PIN =4;
+const int RM_PWM_PIN =6;
 
 // Button pin
-const int UB_PIN =A0
-const int DB_PIN =A1
-const int LB_PIN =7
-const int RB_PIN =8
+const int UB_PIN =A0;
+const int DB_PIN =A1;
+const int LB_PIN =7;
+const int RB_PIN =8;
 
 '''
 
@@ -375,19 +375,13 @@ class BowCar:
         Set the duration for buzzer sound.
         버저 소리의 지속 시간을 설정합니다.
         """
-        command = 'sd'
         if time < 100 or time > 10000:
             print("지속 시간은 100ms에서 10000ms 사이여야 합니다. Duration must be between 100ms and 10000ms.")
             return
         global arduino_loop_code
         arduino_loop_code += f"  duration = {time};\n"
         self.duration = time
-        if time < 1000:
-            command += f'00{time}'
-        elif time < 10000:
-            command += f'0{time}'
-        else:
-            command += f'{time}'
+        command = f'sd{time:05d}'
         self.send_command(command)
 
     def set_speed(self, type : str, speed: int):
@@ -399,9 +393,8 @@ class BowCar:
             print("타입은 왼쪽(l), 오른쪽(r), 모두(a) 중 하나입니다.")
             return
 
-        command = 'sm' + type
-        if speed < 30 or speed > 255:
-            print("모터 속도는 30에서 255 사이여야 합니다. Motor speed must be between 30 and 255.")
+        if speed < 0 or speed > 255:
+            print("모터 속도는 0에서 255 사이여야 합니다. Motor speed must be between 0 and 255.")
             return
         global arduino_loop_code
         if(type == 'l'):
@@ -412,10 +405,7 @@ class BowCar:
             arduino_loop_code += f"  analogWrite(LM_PWM_PIN,{speed});\n"
             arduino_loop_code += f"  analogWrite(RM_PWM_PIN,{speed});\n"
        
-        if speed < 100:
-            command += f'0{speed}'
-        else:
-            command += f'{speed}'
+        command = f'sm{type}{speed:03d}'
         self.send_command(command)
 
     def set_direction(self, type: str, dir: str):
@@ -427,15 +417,21 @@ class BowCar:
             print("타입은 왼쪽(l), 오른쪽(r), 모두(a) 중 하나입니다.")
             return
         global arduino_loop_code
+        if(dir == 'f') :
+            temp = '0'
+        else :
+            temp = '1'
+
         if(type == 'l'):
-            arduino_loop_code += f"  digitalWrite(LM_DIR_PIN,{0 if dir=='f' else 1});\n"
+            arduino_loop_code += f"  digitalWrite(LM_DIR_PIN,{temp});\n"
         elif(type == 'r'):
-            arduino_loop_code += f"  digitalWrite(RM_DIR_PIN,{0 if dir=='f' else 1});\n"
+            arduino_loop_code += f"  digitalWrite(RM_DIR_PIN,{temp});\n"
         else:
-            arduino_loop_code += f"  digitalWrite(LM_DIR_PIN,{0 if dir=='f' else 1});\n"
-            arduino_loop_code += f"  digitalWrite(RM_DIR_PIN,{0 if dir=='f' else 1});\n"
+            arduino_loop_code += f"  digitalWrite(LM_DIR_PIN,{temp});\n"
+            arduino_loop_code += f"  digitalWrite(RM_DIR_PIN,{temp});\n"
         
-        command = 'sw' + type + ('0' if dir=='f' else '1')
+        command = 'sw' + type + dir
+        print(f'명령: "{command}"가 입력되었습니다.')
         self.send_command(command)
 
     def delay(self, ms: int):

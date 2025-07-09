@@ -10,6 +10,7 @@ const int RM_DIR_PIN = 4;
 
 int scale = 0;
 int duration = 2000;
+int _temp;
 
 const int notes[6][12] = {
   // 1옥타브: C1 ~ B1
@@ -37,9 +38,6 @@ void setup() {
   pinMode(RM_PWM_PIN, OUTPUT);
   pinMode(LM_DIR_PIN, OUTPUT);
   pinMode(RM_DIR_PIN, OUTPUT);
-
-  digitalWrite(LM_DIR_PIN, 0);
-  digitalWrite(RM_DIR_PIN, 0);
 }
 
 void loop() {
@@ -49,6 +47,19 @@ void loop() {
     String command = Serial.readStringUntil('\n');
     command.trim();
     
+    /*Serial.println("---[Debug Start]---");
+    Serial.print("수신된 전체 명령어: [");
+    Serial.print(command);
+    Serial.println("]");
+    Serial.print("명령어 길이: ");
+    Serial.println(command.length());
+    if (command.length() >= 2) {
+      Serial.print("command[0]: ");
+      Serial.println(command[0]);
+      Serial.print("command[1]: ");
+      Serial.println(command[1]);
+    }
+    Serial.println("---[Debug End]---");*/
     
     switch(command[0]){
       case 'l':
@@ -65,11 +76,11 @@ void loop() {
             }
             break;
           case 'r':
-            if(command == 'n') digitalWrite(RED_LED_PIN, HIGH);
+            if(command[2] == 'n') digitalWrite(RED_LED_PIN, HIGH);
             else digitalWrite(RED_LED_PIN, LOW);
             break;
           case 'b':
-            if(command == 'n') digitalWrite(BLUE_LED_PIN, HIGH);
+            if(command[2] == 'n') digitalWrite(BLUE_LED_PIN, HIGH);
             else digitalWrite(BLUE_LED_PIN, LOW);
             break;
         }
@@ -116,23 +127,29 @@ void loop() {
       case 's':
         switch(command[1]){
           case 'd':
-            duration = (command[2]-'0')*10000 + (command[3]-'0')*1000 + (command[4]-'0')*100 + (command[5]-'0')*10 + command[6]-'0';
-            break;
-          case 'm':
-            int temp = (command[3]-'0')*100 + (command[4]-'0')*10 + (command[5]-'0');
-            if(command[2] == 'l') analogWrite(LM_PWM_PIN, temp);
-            else if(command[2] == 'r') analogWrite(RM_PWM_PIN, temp);
-            else if(command[2] == 'a'){
-              analogWrite(LM_PWM_PIN, temp);
-              analogWrite(RM_PWM_PIN, temp);
-            }
+            Serial.println(command);
+            duration = command.substring(2).toInt();
             break;
           case 'w':
-            if(command[2] == 'l') digitalWrite(LM_DIR_PIN, command[3]-'0');
-            else if(command[2] == 'r') digitalWrite(RM_DIR_PIN, command[3]-'0');
-            else if(command[3] == 'a'){
-              digitalWrite(LM_DIR_PIN,command[3]-'0');
-              digitalWrite(RM_DIR_PIN,command[3]-'0');
+            Serial.println(command);
+            if(command[3] == 'b') _temp = 1;
+            else _temp = 0;
+
+            if(command[2] == 'l') digitalWrite(LM_DIR_PIN, _temp);
+            else if(command[2] == 'r') digitalWrite(RM_DIR_PIN, _temp);
+            else if(command[2] == 'a'){
+              digitalWrite(LM_DIR_PIN,_temp);
+              digitalWrite(RM_DIR_PIN,_temp);
+            }
+            break;
+          case 'm':
+            Serial.println(command);
+            _temp = command.substring(3).toInt();
+            if(command[2] == 'l') analogWrite(LM_PWM_PIN, _temp);
+            else if(command[2] == 'r') analogWrite(RM_PWM_PIN, _temp);
+            else if(command[2] == 'a'){
+              analogWrite(LM_PWM_PIN, _temp);
+              analogWrite(RM_PWM_PIN, _temp);
             }
             break;
         }
