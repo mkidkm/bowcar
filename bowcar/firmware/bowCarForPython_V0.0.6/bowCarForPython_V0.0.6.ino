@@ -34,20 +34,36 @@ void loop() {
     String command = Serial.readStringUntil('\n');
     command.trim();
     
-    // 첫글자가 l 인 경우 light를 제어  
-    // 두번째 글자가 a인 경우 전부 제어
-    if (command[0] == 'l'){
+    
+    switch(command[0]){
+      case 'l':
+      // 첫글자가 l 인 경우 light를 제어
+      // 두번째 글자가 a인 경우 전부 제어
+        switch(command[1]){
+          case 'a':
+            if(command[2] == 'n'){
+              digitalWrite(RED_LED_PIN, HIGH);
+              digitalWrite(BLUE_LED_PIN, HIGH);
+            }else{
+              digitalWrite(RED_LED_PIN, LOW);
+              digitalWrite(BLUE_LED_PIN, LOW);
+            }
+            break;
+          case 'r':
+            if(command == 'n') digitalWrite(RED_LED_PIN, HIGH);
+            else digitalWrite(RED_LED_PIN, LOW);
+        }
+      
       if(command[1] == 'a'){
         if(command[2] == 'n'){
-          digitalWrite(RED_LED_PIN, HIGH);
-          digitalWrite(BLUE_LED_PIN, HIGH);
+          
         }else{
           digitalWrite(RED_LED_PIN, LOW);
           digitalWrite(BLUE_LED_PIN, LOW);
         }
       }else if(command[1] == 'r'){
         if(command[2] == 'n'){
-          digitalWrite(RED_LED_PIN, HIGH);
+          
         }else{
           digitalWrite(RED_LED_PIN, LOW);
         }
@@ -100,7 +116,12 @@ void loop() {
         delay(duration/(command[4]-'0'));
       }
     }else if(command[0] == 's'){
-      duration = (command[1]-'0')*10000 + (command[2]-'0')*1000 + (command[3]-'0')*100 + (command[4]-'0')*10 + command[5]-'0';
+      // duration 길이 조절 100~10000까지 입력 받기로 함
+      switch(command[1]){
+        case 'd':
+          duration = (command[2]-'0')*10000 + (command[3]-'0')*1000 + (command[4]-'0')*100 + (command[5]-'0')*10 + command[6]-'0';
+      }
+      
     }
   }
 }
