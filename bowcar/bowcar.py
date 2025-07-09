@@ -10,7 +10,7 @@ from pathlib import Path
 
 folder_name = "arduino_bowcar"
 file_name = "arduino_bowcar.ino"
-firmware_version = "0.0.7"
+firmware_version = "0.1.0"
 
 # 아두이노 보드의 핀 번호 기본 설정
 # Default pin numbers for Arduino board
@@ -35,6 +35,9 @@ const int SOUND_SENSOR_PIN =A3;
 
 // Buzzer pin
 const int BUZZER_PIN =3;
+
+// Light Sensor
+const int LightS_PIN = A2;
 
 // Motor control pins
 const int LM_DIR_PIN =2;
@@ -370,7 +373,7 @@ class BowCar:
         arduino_loop_code += "noTone(BUZZER_PIN);\n"
         self.send_command('bnn')
 
-    def set_duration(self, time: int):
+    def set_duration(self, time: int = 2000):
         """
         Set the duration for buzzer sound.
         버저 소리의 지속 시간을 설정합니다.
@@ -384,7 +387,7 @@ class BowCar:
         command = f'sd{time:05d}'
         self.send_command(command)
 
-    def set_speed(self, type : str, speed: int):
+    def set_speed(self, type : str = 'a', speed: int = 100):
         """
         Set the speed of the motors.
         모터의 속도를 설정합니다.
@@ -408,7 +411,7 @@ class BowCar:
         command = f'sm{type}{speed:03d}'
         self.send_command(command)
 
-    def set_direction(self, type: str, dir: str):
+    def set_direction(self, type: str = 'a', dir: str = 'f'):
         """
         Set the direction of Motors.
         모터의 방향을 정합니다.
@@ -433,6 +436,21 @@ class BowCar:
         command = 'sw' + type + dir
         print(f'명령: "{command}"가 입력되었습니다.')
         self.send_command(command)
+
+    def is_light(self,type:str='u',thresehold:int=500) -> int:
+        """
+        Check Light Value using Light Sensor in ITPLE board.
+        잇플 보드에 있는 조도 센서를 이용해서 빛의 세기를 비교합니다.
+        """
+        command = "rl"+type+f'{thresehold}'
+        self.send_command(command)
+        line = None
+        if self.connection:
+            line = self.connection.readline()
+        if line:
+            check = int(line.decode('utf-8').strip())
+            return check
+        return -1
 
     def delay(self, ms: int):
         """

@@ -8,9 +8,17 @@ const int RM_PWM_PIN = 6;
 const int LM_DIR_PIN = 2;
 const int RM_DIR_PIN = 4;
 
+const int UB_PIN = A0;
+const int DB_PIN = A1;
+const int LB_PIN = 6;
+const int RB_PIN = 7;
+
+const int LS_PIN = A2;
+
 int scale = 0;
 int duration = 2000;
 int _temp;
+int lightValue;
 
 const int notes[6][12] = {
   // 1옥타브: C1 ~ B1
@@ -38,6 +46,7 @@ void setup() {
   pinMode(RM_PWM_PIN, OUTPUT);
   pinMode(LM_DIR_PIN, OUTPUT);
   pinMode(RM_DIR_PIN, OUTPUT);
+  pinMode(LS_PIN, INPUT);
 }
 
 void loop() {
@@ -127,12 +136,10 @@ void loop() {
       case 's':
         switch(command[1]){
           case 'd':
-            Serial.println(command);
             duration = command.substring(2).toInt();
             break;
           
           case 'm':
-            Serial.println(command);
             _temp = command.substring(3).toInt();
             if(command[2] == 'l') analogWrite(LM_PWM_PIN, _temp);
             else if(command[2] == 'r') analogWrite(RM_PWM_PIN, _temp);
@@ -143,7 +150,6 @@ void loop() {
             break;
             
           case 'w':
-            Serial.println(command);
             if(command[3] == 'b') _temp = 1;
             else _temp = 0;
 
@@ -157,6 +163,15 @@ void loop() {
         }
         break;
       
+      case 'r':
+        switch(command[1]){
+          case 'l':
+            lightValue = analogRead(LS_PIN);
+            _temp = command.substring(3).toInt();
+            if(command[2]=='u') Serial.println(lightValue>_temp);
+            else Serial.println(lightValue<_temp);
+        }
+        break;
     }
   }
 }
