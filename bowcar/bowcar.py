@@ -10,7 +10,7 @@ from pathlib import Path
 
 folder_name = "arduino_bowcar"
 file_name = "arduino_bowcar.ino"
-firmware_version = "0.1.1"
+firmware_version = "0.1.3"
 
 # 아두이노 보드의 핀 번호 기본 설정
 # Default pin numbers for Arduino board
@@ -473,6 +473,21 @@ class BowCar:
         잇플 보드에 있는 사운드센서(마이크)를 이용해서 주변에서 큰 소리가 나는지 확인합니다.
         """
         command = "rs"+type+f'{thresehold}'
+        self.send_command(command)
+        line = None
+        if self.connection:
+            line = self.connection.readline()
+        if line:
+            check = int(line.decode('utf-8').strip())
+            return check
+        return -1
+
+    def is_line(self,dir:str='l',type:str='u',thresehold:int=500) -> int:
+        """
+        Check Sound using IR Sensor in ITPLE board.
+        잇플 보드에 있는 라인 트레이서를 이용해서 라인을 확인합니다.
+        """
+        command = "ri"+dir+type+f'{thresehold}'
         self.send_command(command)
         line = None
         if self.connection:

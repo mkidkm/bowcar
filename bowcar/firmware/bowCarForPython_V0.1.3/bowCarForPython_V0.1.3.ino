@@ -16,6 +16,9 @@ const int RB_PIN = 8;
 const int LS_PIN = A2;
 const int SS_PIN = A3;
 
+const int IRL_PIN = A6;
+const int IRR_PIN = A7;
+
 int scale = 0;
 int duration = 2000;
 int _temp;
@@ -195,6 +198,13 @@ void loop() {
             Value = analogRead(SS_PIN);
             _temp = command.substring(3).toInt();
             if(command[2]=='u') Serial.println(Value>_temp);
+            else Serial.println(Value<_temp);
+            break;
+          case 'i':
+            if(command[2]=='l') Value = analogRead(IRL_PIN);
+            else Value = analogRead(IRR_PIN);
+            _temp = command.substring(4).toInt();
+            if(command[3]=='u') Serial.println(Value>_temp);
             else Serial.println(Value<_temp);
             break;
         }
