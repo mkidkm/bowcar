@@ -466,6 +466,21 @@ class BowCar:
             check = int(line.decode('utf-8').strip())
             return check
         return -1
+    
+    def is_sound(self,type:str='u',thresehold:int=500) -> int:
+        """
+        Check Sound using Sound Sensor in ITPLE board.
+        잇플 보드에 있는 사운드센서(마이크)를 이용해서 주변에서 큰 소리가 나는지 확인합니다.
+        """
+        command = "rs"+type+f'{thresehold}'
+        self.send_command(command)
+        line = None
+        if self.connection:
+            line = self.connection.readline()
+        if line:
+            check = int(line.decode('utf-8').strip())
+            return check
+        return -1
 
     def delay(self, ms: int):
         """
