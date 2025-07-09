@@ -10,7 +10,7 @@ from pathlib import Path
 
 folder_name = "arduino_bowcar"
 file_name = "arduino_bowcar.ino"
-firmware_version = "0.1.0"
+firmware_version = "0.1.1"
 
 # 아두이노 보드의 핀 번호 기본 설정
 # Default pin numbers for Arduino board
@@ -443,6 +443,21 @@ class BowCar:
         잇플 보드에 있는 조도 센서를 이용해서 빛의 세기를 비교합니다.
         """
         command = "rl"+type+f'{thresehold}'
+        self.send_command(command)
+        line = None
+        if self.connection:
+            line = self.connection.readline()
+        if line:
+            check = int(line.decode('utf-8').strip())
+            return check
+        return -1
+
+    def is_push(self, type:str='u') -> int:
+        """
+        Check Push Buttons in ITPLE board.
+        잇플 보드에 있는 버튼을 눌렀는지 확인합니다.
+        """
+        command = "rb"+type
         self.send_command(command)
         line = None
         if self.connection:
