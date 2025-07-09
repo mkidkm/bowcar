@@ -10,7 +10,7 @@ from pathlib import Path
 
 folder_name = "arduino_bowcar"
 file_name = "arduino_bowcar.ino"
-firmware_version = "0.0.4.2"
+firmware_version = "0.0.5"
 
 # 아두이노 보드의 핀 번호 기본 설정
 # Default pin numbers for Arduino board
@@ -53,7 +53,7 @@ arduino_pins = '''
 
 '''
 
-# Ariduino code for Setup
+# Arduino code for Setup
 # 아두이노 코드 셋업 부분
 arduino_setup_code = '''
     pinMode(RED_LED_PIN, OUTPUT);
@@ -63,7 +63,6 @@ arduino_setup_code = '''
     pinMode(IR_LEFT_PIN, INPUT);
     pinMode(IR_RIGHT_PIN, INPUT);
     pinMode(SOUND_SENSOR_PIN, INPUT);
-    pinMode(BUZZER_PIN, OUTPUT);
     pinMode(MOTOR_LEFT_DIR_PIN, OUTPUT);
     pinMode(MOTOR_LEFT_PIN, OUTPUT);
     pinMode(MOTOR_RIGHT_DIR_PIN, OUTPUT);
@@ -77,6 +76,22 @@ arduino_setup_code = '''
 # Arduino code for Loop
 # 아두이노 코드 루프 부분
 arduino_loop_code = ""
+
+# Tone mapping for buzzer
+# 버저를 위한 음계 매핑
+tones = [
+  [ 33, 35, 37, 39, 41, 44, 46, 49, 52, 55, 58, 62 ],
+  # 2옥타브: C2 ~ B2
+  [ 65, 69, 73, 78, 82, 87, 93, 98, 104, 110, 117, 123 ],
+  # 3옥타브: C3 ~ B3
+  [ 131, 139, 147, 156, 165, 175, 185, 196, 208, 220, 233, 247 ],
+  # 4옥타브: C4 ~ B4
+  [ 262, 277, 294, 311, 330, 349, 370, 392, 415, 440, 466, 494 ],
+  # 5옥타브: C5 ~ B5
+  [ 523, 554, 587, 622, 659, 698, 740, 784, 831, 880, 932, 988 ],
+  # 6옥타브: C6 ~ B6
+  [ 1047, 1109, 1175, 1245, 1319, 1397, 1480, 1568, 1661, 1760, 1865, 1976 ]
+]
 
 class BowCar:
     """
@@ -95,6 +110,8 @@ class BowCar:
                 time.sleep(2)
             except serial.SerialException:
                 print(f'Failed to connect! 연결 실패! (port : {self.port})')
+
+        self.duration = 2000 # 기본 지속 시간은 2초로 설정
 
     def generate_arduino_file(self):
         global arduino_setup_code, arduino_loop_code, arduino_pins
@@ -122,6 +139,9 @@ class BowCar:
 
             os.makedirs(folder_name, exist_ok=True)
             full_path = os.path.join(".",folder_name, file_name)
+            if( os.path.exists(full_path)):
+                os.remove(full_path)  # 기존 파일이 있다면 삭제
+                time.sleep(1)  # 파일 삭제 후 잠시 대기
             with open(full_path, 'w', encoding='utf-8') as f:
                 f.write(full_code)
             print(f"'{full_path}' 파일 생성 완료!")
@@ -129,18 +149,31 @@ class BowCar:
             Upload the generated Arduino code to the board using arduino-cli.
             생성된 아두이노 코드를 arduino-cli를 사용하여 보드에 업로드합니다.
             """
-            command: list[str] = [
+            compile_command: list[str] = [
+                'arduino-cli', 'compile',
+                '--fqbn', 'arduino:avr:uno',  # 보드 유형을 지정합니다. (예: Arduino Uno)
+                full_path
+            ]
+
+            upload_command: list[str] = [
                 'arduino-cli', 'upload', 
                 '--port', str(self.port),
                 '--fqbn', 'arduino:avr:uno',  # 보드 유형을 지정합니다. (예: Arduino Uno)
                 full_path
             ]
-            print("업로드 명령어:", ' '.join(command))  # 업로드 명령어 출력
+            print("업로드 명령어:", ' '.join(upload_command))  # 업로드 명령어 출력
             print("코드 업로드 중... Uploading code...")
             try:
                 # arduino-cli 명령어 실행
                 result = subprocess.run(
-                    command,
+                    compile_command,
+                    check=True,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                )
+                print(result.stdout.decode('utf-8'))  # 업로드 성공 메시지 출력
+                result = subprocess.run(
+                    upload_command,
                     check=True,
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE,
@@ -267,6 +300,73 @@ class BowCar:
         arduino_loop_code += "digitalWrite(BLUE_LED_PIN, LOW);\n"
         self.send_command('laf')
     
+    def buzzer_on(self, scale: str = "C0", octave: int = 3, note: int = 4):
+        """
+        Turn on the buzzer.
+        버저를 켭니다.
+        """
+        global arduino_loop_code
+        if octave < 1 or octave > 6:
+            print("옥타브는 1에서 6 사이여야 합니다. Octave must be between 1 and 6.")
+            return
+        if scale[0] not in "CDEFGAB":
+            print("음계는 C, D, E, F, G, A, B 중 하나여야 합니다. Scale must be one of C, D, E, F, G, A, B.")
+            return
+        if(scale == "C0"):
+            idx = 0
+        elif(scale == "C#"):
+            idx = 1
+        elif(scale == "D0"):
+            idx = 2
+        elif(scale == "D#"):
+            idx = 3
+        elif(scale == "E0"):
+            idx = 4
+        elif(scale == "F0"):
+            idx = 5
+        elif(scale == "F#"):
+            idx = 6
+        elif(scale == "G0"):
+            idx = 7
+        elif(scale == "G#"):
+            idx = 8
+        elif(scale == "A0"):
+            idx = 9
+        elif(scale == "A#"):
+            idx = 10
+        elif(scale == "B0"):
+            idx = 11
+        else:
+            print("유효하지 않은 음계입니다. Invalid scale.")
+            return
+
+        arduino_loop_code += f"  tone(BUZZER_PIN, {tones[octave-1][idx]}, {self.duration/note*0.95});\n"
+        arduino_loop_code += f"  delay({self.duration/note});\n"
+        command = f'b{octave}{scale}{note}'
+        self.send_command(command)
+        time.sleep(self.duration // note / 1000)
+
+    def buzzer_off(self):
+        """
+        Turn off the buzzer.
+        버저를 끕니다.
+        """
+        global arduino_loop_code
+        arduino_loop_code += "noTone(BUZZER_PIN);\n"
+        self.send_command('bnn')
+
+    def set_duration(self, time: int):
+        """
+        Set the duration for buzzer sound.
+        버저 소리의 지속 시간을 설정합니다.
+        """
+        if time < 100 or time > 10000:
+            print("지속 시간은 100ms에서 10000ms 사이여야 합니다. Duration must be between 100ms and 10000ms.")
+            return
+        global arduino_loop_code
+        arduino_loop_code += f"  duration = {time};\n"
+        self.duration = time
+
     def delay(self, ms: int):
         """
         Delay for a specified number of milliseconds.

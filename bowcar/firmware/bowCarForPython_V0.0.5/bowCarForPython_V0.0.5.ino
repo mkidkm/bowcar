@@ -2,7 +2,7 @@ const int RED_LED_PIN = 10;
 const int BLUE_LED_PIN = 11;
 const int BUZZER_PIN = 3;
 int scale = 0;
-int tone_length = 2000;
+int duration = 2000;
 
 const int notes[6][12] = {
   // 1옥타브: C1 ~ B1
@@ -61,32 +61,32 @@ void loop() {
     }else if(command[0] == 'b'){
       //첫 글자가 b 인 경우 speaker를 제어
       //두번째 글자가 옥타브(1~6)
-      //세번째 글자가 계이름, 네번째 글자가 샵여부('d0 ds r0 rs m0 f0 fs s0 ss l0 ls t0') #도 전부 표현
+      //세번째 글자가 계이름, 네번째 글자가 샵여부('c0 c# d0 d# e0 f0 f# g0 g# a0 a# b0') #도 전부 표현
       switch(command[2]){
-        case 'd':
+        case 'C':
           if(command[3] == '0') scale = 0;
           else scale = 1;
           break;
-        case 'r':
+        case 'D':
           if(command[3] == '0') scale = 2;
           else scale = 3;
           break;
-        case 'm':
+        case 'E':
           scale = 4;
           break;
-        case 'f':
+        case 'F':
           if(command[3] == '0') scale = 5;
           else scale = 6;
           break;
-        case 's':
+        case 'G':
           if(command[3] == '0') scale = 7;
           else scale = 8;
           break;
-        case 'l':
+        case 'A':
           if(command[3] == '0') scale = 9;
           else scale = 10;
           break;
-        case 't':
+        case 'B':
           scale = 11;
           break;
         default:
@@ -96,7 +96,8 @@ void loop() {
       if(scale == -1){
         noTone(BUZZER_PIN);
       }else{
-        tone(BUZZER_PIN, notes[command[1]-'1'][scale], tone_length/(command[4]-'0'));
+        tone(BUZZER_PIN, notes[command[1]-'1'][scale], duration/(command[4]-'0')*0.95);
+        delay(duration/(command[4]-'0'));
       }
     }
   }
