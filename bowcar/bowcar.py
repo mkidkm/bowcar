@@ -10,7 +10,7 @@ from pathlib import Path
 
 folder_name = "arduino_bowcar"
 file_name = "arduino_bowcar.ino"
-firmware_version = "0.1.3"
+firmware_version = "0.1.5"
 
 # 아두이노 보드의 핀 번호 기본 설정
 # Default pin numbers for Arduino board
@@ -23,15 +23,15 @@ const int RED_LED_PIN =10;
 const int BLUE_LED_PIN =11;
 
 // Ultrasonic sensor pins
-const int TRIG_PIN =12;
-const int ECHO_PIN =13;
+const int TRIG_PIN =13;
+const int ECHO_PIN =12;
 
 // IR sensor pins
 const int IRL_PIN =A6;
 const int IRR_PIN =A7;
 
 // Sound sensor pin
-const int SOUND_SENSOR_PIN =A3;
+const int SS_PIN =A3;
 
 // Buzzer pin
 const int BUZZER_PIN =3;
@@ -73,21 +73,21 @@ int distance = 0; // 거리 측정 값
 # Arduino code for Setup
 # 아두이노 코드 셋업 부분
 arduino_setup_code = '''
-    pinMode(RED_LED_PIN, OUTPUT);
-    pinMode(BLUE_LED_PIN, OUTPUT);
-    pinMode(TRIG_PIN, OUTPUT);
-    pinMode(ECHO_PIN, INPUT);
-    pinMode(IRL_PIN, INPUT);
-    pinMode(IRR_PIN, INPUT);
-    pinMode(SOUND_SENSOR_PIN, INPUT);
-    pinMode(LM_DIR_PIN, OUTPUT);
-    pinMode(LM_PWM_PIN, OUTPUT);
-    pinMode(RM_DIR_PIN, OUTPUT);
-    pinMode(RM_PWM_PIN, OUTPUT);
-    pinMode(UB_PIN, INPUT);
-    pinMode(DB_PIN, INPUT);
-    pinMode(LB_PIN, INPUT);
-    pinMode(RB_PIN, INPUT);
+  pinMode(RED_LED_PIN, OUTPUT);
+  pinMode(BLUE_LED_PIN, OUTPUT);
+  pinMode(TRIG_PIN, OUTPUT);
+  pinMode(ECHO_PIN, INPUT);
+  pinMode(IRL_PIN, INPUT);
+  pinMode(IRR_PIN, INPUT);
+  pinMode(SS_PIN, INPUT);
+  pinMode(LM_DIR_PIN, OUTPUT);
+  pinMode(LM_PWM_PIN, OUTPUT);
+  pinMode(RM_DIR_PIN, OUTPUT);
+  pinMode(RM_PWM_PIN, OUTPUT);
+  pinMode(UB_PIN, INPUT);
+  pinMode(DB_PIN, INPUT);
+  pinMode(LB_PIN, INPUT);
+  pinMode(RB_PIN, INPUT);
 '''
 
 # Arduino code for Loop
@@ -288,34 +288,34 @@ class BowCar:
         
     def red_on(self):
         global arduino_loop_code
-        arduino_loop_code += "digitalWrite(RED_LED_PIN, HIGH);\n"
+        arduino_loop_code += "  digitalWrite(RED_LED_PIN, HIGH);\n"
         self.send_command('lrn')
 
     def red_off(self):
         global arduino_loop_code
-        arduino_loop_code += "digitalWrite(RED_LED_PIN, LOW);\n"
+        arduino_loop_code += "  digitalWrite(RED_LED_PIN, LOW);\n"
         self.send_command('lrf')
 
     def blue_on(self):
         global arduino_loop_code
-        arduino_loop_code += "digitalWrite(BLUE_LED_PIN, HIGH);\n"
+        arduino_loop_code += "  digitalWrite(BLUE_LED_PIN, HIGH);\n"
         self.send_command('lbn')
 
     def blue_off(self):
         global arduino_loop_code
-        arduino_loop_code += "digitalWrite(BLUE_LED_PIN, LOW);\n"
+        arduino_loop_code += "  digitalWrite(BLUE_LED_PIN, LOW);\n"
         self.send_command('lbf')
 
     def all_light_on(self):
         global arduino_loop_code
-        arduino_loop_code += "digitalWrite(RED_LED_PIN, HIGH);\n"
-        arduino_loop_code += "digitalWrite(BLUE_LED_PIN, HIGH);\n"
+        arduino_loop_code += "  digitalWrite(RED_LED_PIN, HIGH);\n"
+        arduino_loop_code += "  digitalWrite(BLUE_LED_PIN, HIGH);\n"
         self.send_command('lan')
 
     def all_light_off(self):
         global arduino_loop_code
-        arduino_loop_code += "digitalWrite(RED_LED_PIN, LOW);\n"
-        arduino_loop_code += "digitalWrite(BLUE_LED_PIN, LOW);\n"
+        arduino_loop_code += "  digitalWrite(RED_LED_PIN, LOW);\n"
+        arduino_loop_code += "  digitalWrite(BLUE_LED_PIN, LOW);\n"
         self.send_command('laf')
     
     def buzzer_on(self, scale: str = "C0", octave: int = 3, note: int = 4):
@@ -452,6 +452,21 @@ class BowCar:
             return check
         return -1
 
+    def get_light(self) -> int:
+        """
+        Get Light Value using Light Sensor in ITPLE board.
+        잇플 보드에 있는 조도 센서 값을 가져옵니다.
+        """
+        command = "gl"
+        self.send_command(command)
+        line = None
+        if self.connection:
+            line = self.connection.readline()
+        if line:
+            value = int(line.decode('utf-8').strip())
+            return value
+        return -1
+
     def is_push(self, type:str='u') -> int:
         """
         Check Push Buttons in ITPLE board.
@@ -466,7 +481,22 @@ class BowCar:
             check = int(line.decode('utf-8').strip())
             return check
         return -1
-    
+
+    def get_button(self, type:str='u') -> int:
+        """
+        Get Buttons stat using buttons in ITPLE board.
+        잇플 보드에 있는 버튼 값을 가져옵니다.
+        """
+        command = "gb"+type
+        self.send_command(command)
+        line = None
+        if self.connection:
+            line = self.connection.readline()
+        if line:
+            value = int(line.decode('utf-8').strip())
+            return value
+        return -1
+
     def is_sound(self,type:str='u',thresehold:int=500) -> int:
         """
         Check Sound using Sound Sensor in ITPLE board.
@@ -482,12 +512,27 @@ class BowCar:
             return check
         return -1
 
+    def get_sound(self) -> int:
+        """
+        Get Sound Value using Sound Sensor in ITPLE board.
+        잇플 보드에 있는 사운드 센서 값을 가져옵니다.
+        """
+        command = "gs"
+        self.send_command(command)
+        line = None
+        if self.connection:
+            line = self.connection.readline()
+        if line:
+            value = int(line.decode('utf-8').strip())
+            return value
+        return -1
+
     def is_line(self,dir:str='l',type:str='u',thresehold:int=500) -> int:
         """
         Check Sound using IR Sensor in ITPLE board.
         잇플 보드에 있는 라인 트레이서를 이용해서 라인을 확인합니다.
         """
-        command = "ri"+dir+type+f'{thresehold}'
+        command = "rt"+dir+type+f'{thresehold}'
         self.send_command(command)
         line = None
         if self.connection:
@@ -497,11 +542,56 @@ class BowCar:
             return check
         return -1
 
+    def get_line(self, dir:str='l') -> int:
+        """
+        Get Value using Line Tracer in BOWCAR.
+        바우카에 있는 라인 트레이서 값을 가져옵니다.
+        """
+        command = "gt"+dir
+        self.send_command(command)
+        line = None
+        if self.connection:
+            line = self.connection.readline()
+        if line:
+            value = int(line.decode('utf-8').strip())
+            return value
+        return -1
+
+    def distance(self,type:str = 'u', thresehold:int = 10) -> int:
+        """
+        Check Distance Using ultrasonic Sensor with BOWCAR.
+        바우카에 연결한 초음파센서로 거리를 측정합니다.
+        """
+        command = "rd"+f'{thresehold}'
+        self.send_command(command)
+        line = None
+        if self.connection:
+            line = self.connection.readline()
+        if line:
+            check = int(line.decode('utf-8').strip())
+            return check
+        return -1
+
+    def get_distance(self) -> float:
+        """
+        Get Distance Using ultrasonic Sensor with BOWCAR.
+        바우카에 연결한 초음파센서로 거리 값을 가져옵니다.
+        """
+        command = "gd"
+        self.send_command(command)
+        line = None
+        if self.connection:
+            line = self.connection.readline()
+        if line:
+            value = float(line.decode('utf-8').strip())
+            return value
+        return -1
+
     def delay(self, ms: int):
         """
         Delay for a specified number of milliseconds.
         지정된 밀리초 동안 지연합니다.
         """
         global arduino_loop_code
-        arduino_loop_code += f"delay({ms});\n"
+        arduino_loop_code += f"  delay({ms});\n"
         time.sleep(ms/1000) # Python의 sleep은 초 단위이므로 ms를 1000으로 나눔
