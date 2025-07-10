@@ -10,15 +10,23 @@ const int RM_DIR_PIN = 4;
 
 const int UB_PIN = A0;
 const int DB_PIN = A1;
-const int LB_PIN = 6;
-const int RB_PIN = 7;
+const int LB_PIN = 7;
+const int RB_PIN = 8;
 
 const int LS_PIN = A2;
+const int SS_PIN = A3;
+
+const int IRL_PIN = A6;
+const int IRR_PIN = A7;
+
+const int TRIG_PIN = 13;
+const int ECHO_PIN = 12;
 
 int scale = 0;
 int duration = 2000;
 int _temp;
-int lightValue;
+int Value;
+int pushButton;
 
 const int notes[6][12] = {
   // 1옥타브: C1 ~ B1
@@ -35,6 +43,17 @@ const int notes[6][12] = {
   { 1047, 1109, 1175, 1245, 1319, 1397, 1480, 1568, 1661, 1760, 1865, 1976 }
 };
 
+long getDistance() {
+  digitalWrite(TRIG_PIN, LOW); // 대소문자 일치
+  delayMicroseconds(2);
+  digitalWrite(TRIG_PIN, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(TRIG_PIN, LOW);
+  long dura = pulseIn(ECHO_PIN, HIGH); // 대소문자 일치
+  long dist = dura / 29 / 2;
+  return dist;
+}
+
 void setup() {
   // 시리얼 통신을 9600 속도로 시작합니다.
   Serial.begin(9600); 
@@ -46,7 +65,12 @@ void setup() {
   pinMode(RM_PWM_PIN, OUTPUT);
   pinMode(LM_DIR_PIN, OUTPUT);
   pinMode(RM_DIR_PIN, OUTPUT);
+
   pinMode(LS_PIN, INPUT);
+  pinMode(SS_PIN, INPUT);
+
+  pinMode(TRIG_PIN, OUTPUT);
+  pinMode(ECHO_PIN, INPUT);
 }
 
 void loop() {
@@ -55,20 +79,6 @@ void loop() {
     // 줄바꿈 문자를 만날 때까지 문자열 전체를 읽어옴
     String command = Serial.readStringUntil('\n');
     command.trim();
-    
-    /*Serial.println("---[Debug Start]---");
-    Serial.print("수신된 전체 명령어: [");
-    Serial.print(command);
-    Serial.println("]");
-    Serial.print("명령어 길이: ");
-    Serial.println(command.length());
-    if (command.length() >= 2) {
-      Serial.print("command[0]: ");
-      Serial.println(command[0]);
-      Serial.print("command[1]: ");
-      Serial.println(command[1]);
-    }
-    Serial.println("---[Debug End]---");*/
     
     switch(command[0]){
       case 'l':
@@ -94,6 +104,7 @@ void loop() {
             break;
         }
         break;
+      
       case 'b':
         switch(command[2]){
           case 'C':
@@ -133,6 +144,7 @@ void loop() {
           delay(duration/(command[4]-'0'));
         }
         break;
+        
       case 's':
         switch(command[1]){
           case 'd':
@@ -150,8 +162,7 @@ void loop() {
             break;
             
           case 'w':
-            if(command[3] == 'b') _temp = 1;
-            else _temp = 0;
+            _temp = command[3] - '0';
 
             if(command[2] == 'l') digitalWrite(LM_DIR_PIN, _temp);
             else if(command[2] == 'r') digitalWrite(RM_DIR_PIN, _temp);
@@ -166,12 +177,82 @@ void loop() {
       case 'r':
         switch(command[1]){
           case 'l':
-            lightValue = analogRead(LS_PIN);
+            Value = analogRead(LS_PIN);
             _temp = command.substring(3).toInt();
-            if(command[2]=='u') Serial.println(lightValue>_temp);
-            else Serial.println(lightValue<_temp);
+            if(command[2]=='u') Serial.println(Value>_temp);
+            else Serial.println(Value<_temp);
+            break;
+          
+          case 'b':
+            switch(command[2]){
+              case 'u':
+                pushButton = analogRead(UB_PIN);
+                break;
+              case 'd':
+                pushButton = analogRead(DB_PIN);
+                break;
+              case 'l':
+                pushButton = digitalRead(LB_PIN);
+                break;
+              case 'r':
+                pushButton = digitalRead(RB_PIN);
+                break;
+            }
+            Serial.println(pushButton==0);
+            break;
+          
+          case 's':
+            Value = analogRead(SS_PIN);
+            _temp = command.substring(3).toInt();
+            if(command[2]=='u') Serial.println(Value>_temp);
+            else Serial.println(Value<_temp);
+            break;
+          
+          case 't':
+            if(command[2]=='l') Value = analogRead(IRL_PIN);
+            else Value = analogRead(IRR_PIN);
+            _temp = command.substring(4).toInt();
+            if(command[3]=='u') Serial.println(Value>_temp);
+            else Serial.println(Value<_temp);
+            break;
+          
+          case 'd':
+            long dist = getDistance(); // 함수 호출\
+
+            _temp = command.substring(3).toInt();
+
+            if(command[2]=='u') Serial.println(dist > _temp);
+            else Serial.println(dist < _temp);
+
+            break;
         }
         break;
+
+      case 'g':
+        switch(command[1]){
+          
+          case 'l':
+            Value = analogRead(LS_PIN);
+            Serial.println(Value);
+            break;
+          
+          case 's':
+            Value = analogRead(SS_PIN);
+            Serial.println(Value);
+            break;
+          
+          case 't':
+            if(command[2]=='l') Value = analogRead(IRL_PIN);
+            else Value = analogRead(IRR_PIN);
+            Serial.println(Value);
+            break;
+          
+          case 'd':
+            long dist = getDistance(); // 함수 호출
+            Serial.println(dist);
+            break;
+        break;
+      }
     }
   }
 }
