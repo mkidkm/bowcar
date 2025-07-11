@@ -17,9 +17,9 @@ if you want to install 'arduino-cli' click that url.
 설치법
 ------
 powershell 등에서 pip을 이용해 설치할 수 있습니다.
-'''
+```
 pip install bowcar
-'''
+```
 
 
 명령어
