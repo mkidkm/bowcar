@@ -130,7 +130,6 @@ class UploadBowCar(BowCarBase):
 
         
     def set_speed(self, type, speed): #type: ignore
-        
         if type in ('l', 'a'):
             self._add_pin_mode("LM_PWM_PIN", "OUTPUT")
             self.loop_code += f"{self._get_indent()}analogWrite(LM_PWM_PIN, {speed});\n"
@@ -178,6 +177,12 @@ long Distance() {
     def is_push(self, type: str = 'u') -> str:
         pin_map = {'u': "UB_PIN", 'd': "DB_PIN", 'l': "LB_PIN", 'r': "RB_PIN"}
         return f"(digitalRead({pin_map.get(type, 'UB_PIN')}) == LOW)" # 풀업 저항 기준
+    
+    def get_line(self,dir:str='l'):
+        _pin_name = 'IRL_PIN' if dir == 'l' else 'IRR_PIN'
+        self._add_pin_mode(_pin_name,'INPUT')
+        return f"analogRead({_pin_name})"
+
 
     # --- 제어문 빌더 ---
     def bfor(self, condition: str):

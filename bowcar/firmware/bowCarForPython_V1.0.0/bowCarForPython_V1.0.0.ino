@@ -44,20 +44,19 @@ const int notes[6][12] = {
 };
 
 long getDistance() {
-  digitalWrite(TRIG_PIN, LOW); // 대소문자 일치
+  digitalWrite(TRIG_PIN, LOW);
   delayMicroseconds(2);
   digitalWrite(TRIG_PIN, HIGH);
   delayMicroseconds(10);
   digitalWrite(TRIG_PIN, LOW);
-  long dura = pulseIn(ECHO_PIN, HIGH); // 대소문자 일치
+  long dura = pulseIn(ECHO_PIN, HIGH);
   long dist = dura / 29 / 2;
   return dist;
 }
 
 void setup() {
   // 시리얼 통신을 9600 속도로 시작합니다.
-  Serial.begin(9600); 
-  // 아두이노 보드에 내장된 LED를 출력으로 설정합니다.
+  Serial.begin(9600);
   pinMode(RED_LED_PIN, OUTPUT);
   pinMode(BLUE_LED_PIN, OUTPUT);
 
@@ -74,9 +73,7 @@ void setup() {
 }
 
 void loop() {
-  // 파이썬으로부터 수신한 데이터가 있는지 확인합니다.
   if (Serial.available() > 0) {
-    // 줄바꿈 문자를 만날 때까지 문자열 전체를 읽어옴
     String command = Serial.readStringUntil('\n');
     command.trim();
     
