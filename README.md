@@ -1,10 +1,29 @@
+BOWCAR Module for Python
+========================
+
+infomation
+-----------
+
 바우카를 이용하여 파이썬을 배우기 위한 모듈입니다.
 this module for study python with bowcar hardware.
 
-arduino-cli 프로그램의 설치가 필수입니다.
-this module need 'arduino-cli' program.
+arduino-cli 의 설치가 필수입니다.
+this module need 'arduino-cli'.
+
+[Arduino-cli 설치](https://arduino.github.io/arduino-cli/1.2/installation/)
+이곳에서 설치하시길 바랍니다.
+if you want to install 'arduino-cli' click that url.
+
+설치법
+------
+powershell 등에서 pip을 이용해 설치할 수 있습니다.
+```
+pip install bowcar
+```
+
 
 명령어
+------
 
 0. 시간 지연 관련
     - BowCar.delay(time) : time(ms)만큼 지연
