@@ -66,6 +66,7 @@ class UploadBowCar(BowCarBase):
                     exc_tb:object):
             self.car._indent_level -= 1
             self.car.loop_code += f"{self.car._get_indent()}}}\n"
+            return False
 
     # --- 사용자 호출 메소드 (BowCarBase 구현) ---
 
@@ -77,7 +78,7 @@ class UploadBowCar(BowCarBase):
     
     def _add_value(self, type:str, name:str, initial_val=None): #type:ignore
         """
-        전역 번수 선언을 중복 없이 추가합니다.
+        전역 변수 선언을 중복 없이 추가합니다.
         예: _add_value("int", "sensorValue", 0) -> "int sensorValue = 0;"
         """
         command = f"{type} {name}"
@@ -105,57 +106,35 @@ class UploadBowCar(BowCarBase):
         self.red(status)
         self.blue(status)
 
-    # --- 네오픽셀 제어 메소드 ---
-    def neopixel(self, index: int, r: int, g: int, b: int):
+    def _ensure_neopixel(self):
+        """네오픽셀 사용을 위한 선언 및 초기화 코드를 추가합니다."""
         self.includes.add("#include <Adafruit_NeoPixel.h>")
         self.definitions.add("#define NEOPIXEL_PIN 9")
         self.definitions.add("#define NEOPIXEL_COUNT 4")
         self.globals.add("Adafruit_NeoPixel strip(NEOPIXEL_COUNT, NEOPIXEL_PIN, NEO_GRB + NEO_KHZ800);")
         
-        # setup 코드는 중복 추가 방지 필요
         if "  strip.begin();" not in self.setup_code:
             self.setup_code += "  strip.begin();\n"
             self.setup_code += "  strip.show();\n"
-        
+
+    # --- 네오픽셀 제어 메소드 ---
+    def neopixel(self, index: int, r: int, g: int, b: int):
+        self._ensure_neopixel()
         self.loop_code += f"{self._get_indent()}strip.setPixelColor({index}, strip.Color({r}, {g}, {b}));\n"
         self.loop_code += f"{self._get_indent()}strip.show();\n"
 
     def neopixel_all(self, r: int, g: int, b: int):
-        self.includes.add("#include <Adafruit_NeoPixel.h>")
-        self.definitions.add("#define NEOPIXEL_PIN 9")
-        self.definitions.add("#define NEOPIXEL_COUNT 4")
-        self.globals.add("Adafruit_NeoPixel strip(NEOPIXEL_COUNT, NEOPIXEL_PIN, NEO_GRB + NEO_KHZ800);")
-
-        if "  strip.begin();" not in self.setup_code:
-            self.setup_code += "  strip.begin();\n"
-            self.setup_code += "  strip.show();\n"
-
+        self._ensure_neopixel()
         self.loop_code += f"{self._get_indent()}for(int i=0; i<NEOPIXEL_COUNT; i++) {{ strip.setPixelColor(i, strip.Color({r}, {g}, {b})); }}\n"
         self.loop_code += f"{self._get_indent()}strip.show();\n"
 
     def neopixel_clear(self):
-        self.includes.add("#include <Adafruit_NeoPixel.h>")
-        self.definitions.add("#define NEOPIXEL_PIN 9")
-        self.definitions.add("#define NEOPIXEL_COUNT 4")
-        self.globals.add("Adafruit_NeoPixel strip(NEOPIXEL_COUNT, NEOPIXEL_PIN, NEO_GRB + NEO_KHZ800);")
-
-        if "  strip.begin();" not in self.setup_code:
-            self.setup_code += "  strip.begin();\n"
-            self.setup_code += "  strip.show();\n"
-
+        self._ensure_neopixel()
         self.loop_code += f"{self._get_indent()}strip.clear();\n"
         self.loop_code += f"{self._get_indent()}strip.show();\n"
 
     def neopixel_brightness(self, value: int):
-        self.includes.add("#include <Adafruit_NeoPixel.h>")
-        self.definitions.add("#define NEOPIXEL_PIN 9")
-        self.definitions.add("#define NEOPIXEL_COUNT 4")
-        self.globals.add("Adafruit_NeoPixel strip(NEOPIXEL_COUNT, NEOPIXEL_PIN, NEO_GRB + NEO_KHZ800);")
-
-        if "  strip.begin();" not in self.setup_code:
-            self.setup_code += "  strip.begin();\n"
-            self.setup_code += "  strip.show();\n"
-
+        self._ensure_neopixel()
         self.loop_code += f"{self._get_indent()}strip.setBrightness({value});\n"
         self.loop_code += f"{self._get_indent()}strip.show();\n"
 
@@ -179,7 +158,8 @@ class UploadBowCar(BowCarBase):
              self.loop_code += f"{self._get_indent()}noTone(BUZZER_PIN);\n"
 
     def set_duration(self, time:int=2000):
-        self.loop_code += f"duration = {time};\n"
+        self._add_value("int", "duration", 2000)
+        self.loop_code += f"{self._get_indent()}duration = {time};\n"
 
     def motor(self, left: int, right: int):
         # Left Motor
@@ -313,9 +293,9 @@ long Distance() {
     def set_value(self, type:str = 'int', name:str = 'x', val = None): #type: ignore
         self._add_value(type, name) #type:ignore
         if isinstance(val, str) and len(val) == 1:
-            self.loop_code += f"{name} = '{val}';\n"
+            self.loop_code += f"{self._get_indent()}{name} = '{val}';\n"
         else:    
-            self.loop_code += f"{name} = {val};\n"
+            self.loop_code += f"{self._get_indent()}{name} = {val};\n"
 
     def set_array(self, type: str, name: str, values: list):
         """

@@ -15,7 +15,7 @@ FIRMWARE_VERSION = "1.0.0"
 class LiveBowCar(BowCarBase):
     """
     아두이노와 실시간으로 통신하여 제어하는 클래스입니다.
-    객체 생성 시, 아두이노에 범용 펌웨어를 업로드하고 시리얼 통신을 시작합니다.
+    객체 생성 시, 시리얼 통신을 시작합니다. (펌웨어 업로드 필요 시 _upload_firmware 별도 호출)
     """
     def __init__(self):
         self.port = self._find_arduino_port()
