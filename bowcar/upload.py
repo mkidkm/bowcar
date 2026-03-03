@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Optional, Type, Union
 from .base import BowCarBase
 
-# 이 클래스에서 사용할 아두이노 보드, 폴더, 파일 이름 정보
+# 이 클래스에서 사용할 바우카 보드, 폴더, 파일 이름 정보
 FQBN = "arduino:avr:uno"
 FOLDER_NAME = "arduino_bowcar"
 FILE_NAME = "arduino_bowcar.ino"
@@ -154,11 +154,13 @@ class UploadBowCar(BowCarBase):
                 command += f", (float)duration/{note}*0.95"
             command += ");"
             self.loop_code += f"{self._get_indent()}{command}\n"
+            if note > 0:
+                # 라이브 모드(time.sleep)와 동일하게, 지정된 음 길이만큼 코드 실행을 멈추어 소리를 유지시킵니다.
+                self.loop_code += f"{self._get_indent()}delay((float)duration/{note});\n"
         elif status == 'off':
              self.loop_code += f"{self._get_indent()}noTone(BUZZER_PIN);\n"
 
     def set_duration(self, time:int=2000):
-        self._add_value("int", "duration", 2000)
         self.loop_code += f"{self._get_indent()}duration = {time};\n"
 
     def motor(self, left: int, right: int):
@@ -387,7 +389,7 @@ int duration = 2000;
         return full_code
 
     def upload_code(self):
-        """생성된 C++ 코드를 아두이노에 업로드합니다."""
+        """생성된 C++ 코드를 바우카에 업로드합니다."""
         # 1. 라이브러리 설치 (Adafruit NeoPixel)
         print("필요한 라이브러리를 확인 및 설치합니다...")
         subprocess.run(['arduino-cli', 'lib', 'install', 'Adafruit NeoPixel'], check=False, capture_output=True)
@@ -409,10 +411,10 @@ int duration = 2000;
             print(f"'{ino_file}' 파일 생성 완료!")
             print("코드 컴파일 및 업로드 시작...")
             
-            # 아두이노 포트 찾기 (LiveBowCar의 로직 재사용 또는 간단히 구현)
+            # 바우카 포트 찾기 (LiveBowCar의 로직 재사용 또는 간단히 구현)
             port = self._find_arduino_port()
             if not port:
-                print("아두이노를 찾을 수 없습니다.")
+                print("바우카를 찾을 수 없습니다.")
                 return
 
             command = [
@@ -438,11 +440,11 @@ int duration = 2000;
                 print(f"업로드 중 오류 발생: {e}")
 
     def _find_arduino_port(self):
-        """아두이노 포트를 찾아 반환하고, 없으면 None을 반환합니다."""
+        """바우카 포트를 찾아 반환하고, 없으면 None을 반환합니다."""
         ports = serial.tools.list_ports.comports()
         for port in ports:
             if 'Arduino' in port.description or 'CH340' in port.description:
-                print(f"아두이노 발견: {port.device}")
+                print(f"바우카 발견: {port.device}")
                 return port.device
-        print('아두이노를 찾을 수 없습니다!')
+        print('바우카를 찾을 수 없습니다!')
         return None

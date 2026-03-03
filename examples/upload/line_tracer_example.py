@@ -22,20 +22,20 @@ def main():
         left_off_line = car.check_line('l', line_threshold, '<')
         right_off_line = car.check_line('r', line_threshold, '<')
         
-        # 1. 왼쪽 센서만 선을 밟았을 때 (왼쪽으로 벗어남) -> 좌회전으로 복귀
+        # 1. 왼쪽 센서만 선을 밟았을 때 (오른쪽으로 벗어남) -> 좌회전으로 복귀
         with car.bif(f"{left_on_line} && {right_off_line}"):
-            car.motor(-50, 150) # 왼쪽 바퀴는 뒤로, 오른쪽 바퀴는 앞으로 (빠른 좌회전)
+            car.motor(-100, 150) # 왼쪽 바퀴는 뒤로, 오른쪽 바퀴는 앞으로 (빠른 좌회전)
             
-        # 2. 오른쪽 센서만 선을 밟았을 때 (오른쪽으로 벗어남) -> 우회전으로 복귀
+        # 2. 오른쪽 센서만 선을 밟았을 때 (왼쪽으로 벗어남) -> 우회전으로 복귀
         with car.belif(f"{left_off_line} && {right_on_line}"):
-            car.motor(150, -50) # 우회전
+            car.motor(150, -100) # 우회전
             
         # 3. 양쪽 다 선 위에 있거나(교차로), 둘 다 선을 벗어난 경우 -> 직진
         with car.belse():
             car.motor(100, 100) # 안정적인 속도로 전진
             
-    # 생성된 C++ 코드를 아두이노로 업로드합니다.
-    print("코드를 아두이노에 업로드합니다...")
+    # 생성된 C++ 코드를 바우카에 업로드합니다.
+    print("코드를 바우카에 업로드합니다...")
     car.upload_code()
     print("완료!")
 
