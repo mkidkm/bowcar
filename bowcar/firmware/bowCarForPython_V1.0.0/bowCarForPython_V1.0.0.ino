@@ -62,12 +62,19 @@ long Distance() {
 void setup() {
   Serial.begin(9600);
   pinMode(UB_PIN, INPUT_PULLUP);
+  pinMode(DB_PIN, INPUT_PULLUP);
+  pinMode(LB_PIN, INPUT_PULLUP);
+  pinMode(RB_PIN, INPUT_PULLUP);
   pinMode(RED_LED_PIN, OUTPUT);
   pinMode(LS_PIN, INPUT);
   pinMode(BLUE_LED_PIN, OUTPUT);
   pinMode(TRIG_PIN, OUTPUT);
   pinMode(ECHO_PIN, INPUT);
   pinMode(BUZZER_PIN, OUTPUT);
+  pinMode(LM_DIR_PIN, OUTPUT);
+  pinMode(LM_PWM_PIN, OUTPUT);
+  pinMode(RM_DIR_PIN, OUTPUT);
+  pinMode(RM_PWM_PIN, OUTPUT);
   
   strip.begin();
   strip.show(); // Initialize all pixels to 'off'
